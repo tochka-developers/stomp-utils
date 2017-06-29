@@ -9,6 +9,10 @@ use \Stomp;
 use \StompException;
 use Tochka\Integration\Stomp\Exception\StompClientException;
 
+/**
+ *
+ * @author Sergey Ivanov(ivanov@tochka.com)
+ */
 class StompClient
 {
     /**

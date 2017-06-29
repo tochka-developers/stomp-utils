@@ -5,6 +5,10 @@
  */
 namespace Tochka\Integration\Stomp\Exception;
 
+/**
+ *
+ * @author Sergey Ivanov(ivanov@tochka.com)
+ */
 class StompClientException extends \Exception
 {
     // nothing to do?

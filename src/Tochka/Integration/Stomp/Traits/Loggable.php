@@ -8,7 +8,6 @@ namespace Tochka\Integration\Stomp\Traits;
 use Psr\Log\LoggerInterface;
 
 /**
- * Описание Loggable
  *
  * @author Sergey Ivanov(ivanov@tochka.com)
  */

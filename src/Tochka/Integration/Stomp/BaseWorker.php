@@ -5,6 +5,10 @@
  */
 namespace Tochka\Integration\Stomp;
 
+/**
+ *
+ * @author Sergey Ivanov(ivanov@tochka.com)
+ */
 class BaseWorker
 {
     /**

@@ -7,6 +7,10 @@ namespace Tochka\Integration\Stomp;
 
 use Psr\Log\LogLevel;
 
+/**
+ *
+ * @author Sergey Ivanov(ivanov@tochka.com)
+ */
 class Listener
 {
     use Traits\Loggable;

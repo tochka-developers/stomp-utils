@@ -8,7 +8,6 @@ namespace Tochka\Integration\Stomp;
 use \StompFrame;
 
 /**
- * Описание FrameMapper
  *
  * @author Sergey Ivanov(ivanov@tochka.com)
  */
