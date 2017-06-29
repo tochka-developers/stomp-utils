@@ -28,15 +28,13 @@ class Publisher
     /**
      * Опубликовать сообщение в очереди
      *
-     * @param string $requestType Тип сообщения в терминах ActiveMQ(event, request, response)
-     * @param string $destination
-     * @param string $esbMsgType Тип сообщения в терминах внутренней логики сообщений ESB
-     * @param array $data
-     * @param array $customXMLAttributes
-     * @param array $customHeaders
+     * @param string $destination Очередь, куда класть сообщение
+     * @param string $body Тело сообщения
+     * @param array $headers
+     * @param string $transactionId ID транзакции
      * @return boolean
      */
-    private function send($destination, $body, array $headers = [], string $transactionId = '')
+    public function send(string $destination, string $body, array $headers = [], string $transactionId = '')
     {
         if (strlen($transactionId) === 0) {
             $transactionId = uniqid();
