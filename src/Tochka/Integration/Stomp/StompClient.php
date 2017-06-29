@@ -21,14 +21,13 @@ class StompClient
     private $pw;
 
     /**
-     * Example broker uri
+     * Примеры $connectionString:
      * - Use only one broker uri: tcp://localhost:61614
      * - use failover in given order: failover://(tcp://localhost:61614,ssl://localhost:61612)
      *
      * @param string $connectionString hosts url
      * @param string $login login
      * @param string $pw password
-     *
      * @throws StompClientException
      */
     public function __construct(string $connectionString, string $login, string $pw)
