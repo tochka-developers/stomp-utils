@@ -5,7 +5,7 @@
  */
 namespace Tochka\Integration\Stomp;
 
-class BaseJob
+class BaseWorker
 {
     /**
      * @var FrameMapper

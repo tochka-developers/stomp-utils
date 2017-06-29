@@ -93,8 +93,8 @@ class Listener
         return new FrameMapper($frame);
     }
 
-    protected function generateHandler(FrameMapper $mapper): BaseJob
+    protected function generateHandler(FrameMapper $mapper): BaseWorker
     {
-        return new BaseJob($mapper);
+        return new BaseWorker($mapper);
     }
 }
