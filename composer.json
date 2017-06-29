@@ -1,0 +1,19 @@
+{
+    "name": "tochka/stomp-utils",
+    "description": "Stomp protocol utils set",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Ivanov Sergey",
+            "email": "ivanov@tochka.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Tochka\\": "src/Tochka/"
+        }
+    },
+    "require": {
+        "psr/log": "^1.0"
+    }
+}
