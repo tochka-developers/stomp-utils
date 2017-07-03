@@ -1,5 +1,5 @@
 {
-    "name": "tochka/stomp-utils",
+    "name": "tochka-developers/stomp-utils",
     "description": "Stomp protocol utils set",
     "type": "library",
     "version":"1.0.0",
@@ -11,7 +11,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Tochka\\": "src/Tochka/"
+            "Tochka\\Integration\\Stomp\\": "src/Tochka/Integration/Stomp"
         }
     },
     "require": {
