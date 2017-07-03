@@ -11,7 +11,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Tochka\\Integration\\Stomp\\": "src/Tochka/Integration/Stomp"
+            "Tochka\\Integration\\Stomp\\": "src/"
         }
     },
     "require": {
