@@ -27,7 +27,7 @@ class BaseWorker
     /**
      * @return bool
      */
-    public function handle()
+    public function handle() : bool
     {
         return true;
     }
