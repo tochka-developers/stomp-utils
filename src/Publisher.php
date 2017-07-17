@@ -5,6 +5,7 @@
  */
 namespace Tochka\Integration\Stomp;
 
+use Stomp;
 use Psr\Log\LogLevel;
 
 /**
@@ -16,17 +17,17 @@ class Publisher
     use Traits\Loggable;
 
     /**
-     * @var StompClient
+     * @var Stomp
      */
-    protected $client;
+    protected $stomp;
 
     /**
      * Publisher constructor
-     * @param StompClient $client
+     * @param Stomp $stomp
      */
-    public function __construct(StompClient $client)
+    public function __construct(Stomp $stomp)
     {
-        $this->client = $client;
+        $this->stomp = $stomp;
     }
 
     /**
@@ -46,16 +47,13 @@ class Publisher
 
         $result = true;
         try {
-            $stomp = $this->client->getConnection();
-            $stomp->begin($transactionId);
-            $stomp->send($destination, $body, $headers);
-            $stomp->commit($transactionId);
+            $this->stomp->begin($transactionId);
+            $this->stomp->send($destination, $body, $headers);
+            $this->stomp->commit($transactionId);
         } catch (\Exception $e) {
             $result = false;
 
-            if (isset($stomp)) {
-                $stomp->abort($transactionId);
-            }
+            $this->stomp->abort($transactionId);
 
             // Логирование в случае, если установлен логгер
             $this->putInLog(LogLevel::ERROR, 'Stomp transaction failed. Transaction id: ' . $transactionId, [
