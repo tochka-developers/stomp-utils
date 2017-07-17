@@ -2,7 +2,6 @@
     "name": "tochka-developers/stomp-utils",
     "description": "Stomp protocol utils set",
     "type": "package",
-    "version":"1.0.0",
     "authors": [
         {
             "name": "Ivanov Sergey",
