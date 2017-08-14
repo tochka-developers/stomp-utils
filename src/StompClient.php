@@ -1,8 +1,5 @@
 <?php
 
-/**
- * @created     28.06.2017
- */
 namespace Tochka\Integration\Stomp;
 
 use \Stomp;
@@ -10,8 +7,8 @@ use \StompException;
 use Tochka\Integration\Stomp\Exception\StompClientException;
 
 /**
- *
- * @author Sergey Ivanov(ivanov@tochka.com)
+ * Class StompClient
+ * @package Tochka\Integration\Stomp
  */
 class StompClient
 {
@@ -40,21 +37,20 @@ class StompClient
 
         $pattern = "|^(([a-zA-Z0-9]+)://)+\(*([a-zA-Z0-9\.:/i,-_]+)\)*$|i";
         if (preg_match($pattern, $connectionString, $matches)) {
-            $scheme = $matches[2];
-            $hostsPart = $matches[3];
 
-            if ($scheme != 'failover') {
+            list(, , $scheme, $hostsPart) = $matches;
+
+            if ($scheme !== 'failover') {
                 $hosts[] = $hostsPart;
             } else {
-                $urls = explode(',', $hosts);
-                foreach ($urls as $url) {
-                    $hosts[] = $urls;
+                foreach (explode(',', $hostsPart) as $url) {
+                    $hosts[] = $url;
                 }
             }
         }
 
         if (empty($hosts)) {
-            throw new StompClientException("Bad Broker URL {$connectionString}. Check used scheme!");
+            throw new StompClientException('Bad Broker URL ' . $connectionString . 'Check used scheme!');
         }
 
         $this->hosts = $hosts;
@@ -72,10 +68,11 @@ class StompClient
 
     /**
      * @return Stomp
+     * @throws StompClientException
      */
-    public function getConnection()
+    public function getConnection(): \Stomp
     {
-        if (is_null($this->stomp)) {
+        if (null === $this->stomp) {
             $this->newConnection();
         }
 

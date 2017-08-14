@@ -1,4 +1,8 @@
 # Stomp protocol utils
+
+## Requirements
+php 7.x
+
 Набор классов-утилит для взаимодействия с брокетами сообщений (ActiveMQ, RabbitMQ, ZeroMQ и т.д.) по протоколу [Stomp](https://stomp.github.io/).
 Пакет решает две наиболее распространенные задачи:
  - Отправка сообщения в очередь;
