@@ -15,11 +15,13 @@ class StompClient
     /**
      * @var Stomp
      */
-    private $stomp;
+    protected $stomp;
 
-    private $hosts;
-    private $login;
-    private $pw;
+    protected $hosts;
+    protected $login;
+    protected $pw;
+
+    protected $errors = [];
 
     /**
      * Примеры $connectionString:
@@ -87,9 +89,10 @@ class StompClient
      */
     public function newConnection()
     {
+        $this->errors = [];
         $stomp = $this->initStomp();
         if (!($stomp instanceof Stomp)) {
-            throw new StompClientException("Couldn't connect to Brocker by provided hosts: " . print_r($this->hosts, true));
+            throw new StompClientException("Couldn't connect to Brocker by provided hosts: " . implode('; ', $this->errors));
         }
 
         $this->stomp = $stomp;
@@ -126,7 +129,7 @@ class StompClient
         try {
             return new Stomp($url, $login, $pw, ['accept-version' => '1.2']);
         } catch (StompException $e) {
-            //nothing to do?
+            $this->errors[] = $url . ': ' . $e->getMessage();
         }
 
         return null;
