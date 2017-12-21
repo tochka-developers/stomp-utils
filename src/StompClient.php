@@ -1,36 +1,46 @@
 <?php
 
+/**
+ * @created     28.06.2017
+ */
+
 namespace Tochka\Integration\Stomp;
 
-use \Stomp;
-use \StompException;
+use Stomp;
+use StompException;
+use Exception;
+use Psr\Log\LogLevel;
 use Tochka\Integration\Stomp\Exception\StompClientException;
 
 /**
- * Class StompClient
- * @package Tochka\Integration\Stomp
+ * @author Sergey Ivanov(ivanov@tochka.com)
  */
 class StompClient
 {
+    use Traits\Loggable;
+
     /**
      * @var Stomp
      */
-    protected $stomp;
+    private $stomp;
 
-    protected $hosts;
-    protected $login;
-    protected $pw;
+    private $hosts;
+    private $login;
+    private $pw;
 
-    protected $errors = [];
+    /**
+     * @var array
+     */
+    private $queues = [];
 
     /**
      * Примеры $connectionString:
      * - Use only one broker uri: tcp://localhost:61614
-     * - use failover in given order: failover://(tcp://localhost:61614,ssl://localhost:61612)
+     * - use failover in given order: failover://(tcp://localhost:61614,ssl://localhost:61612).
      *
-     * @param string $connectionString hosts url
-     * @param string $login login
-     * @param string $pw password
+     * @param  string               $connectionString hosts url
+     * @param  string               $login            login
+     * @param  string               $pw               password
      * @throws StompClientException
      */
     public function __construct(string $connectionString, string $login, string $pw)
@@ -39,20 +49,21 @@ class StompClient
 
         $pattern = "|^(([a-zA-Z0-9]+)://)+\(*([a-zA-Z0-9\.:/i,-_]+)\)*$|i";
         if (preg_match($pattern, $connectionString, $matches)) {
+            $scheme = $matches[2];
+            $hostsPart = $matches[3];
 
-            list(, , $scheme, $hostsPart) = $matches;
-
-            if ($scheme !== 'failover') {
+            if ('failover' != $scheme) {
                 $hosts[] = $hostsPart;
             } else {
-                foreach (explode(',', $hostsPart) as $url) {
+                $urls = explode(',', $hostsPart);
+                foreach ($urls as $url) {
                     $hosts[] = $url;
                 }
             }
         }
 
         if (empty($hosts)) {
-            throw new StompClientException('Bad Broker URL ' . $connectionString . 'Check used scheme!');
+            throw new StompClientException("Bad Broker URL {$connectionString}. Check used scheme!");
         }
 
         $this->hosts = $hosts;
@@ -65,73 +76,257 @@ class StompClient
         $this->hosts = null;
         $this->login = null;
         $this->pw = null;
+        if ($this->stomp) {
+            foreach ($this->queues as $queue) {
+                $this->stomp->unsubscribe($queue, ['id' => $stomp->getSessionId()]);
+            }
+        }
         $this->stomp = null;
+        $this->queues = [];
     }
 
     /**
-     * @return Stomp
-     * @throws StompClientException
-     */
-    public function getConnection(): \Stomp
-    {
-        if (null === $this->stomp) {
-            $this->newConnection();
-        }
-
-        return $this->stomp;
-    }
-
-    /**
-     * Устанавливает новое соединение
+     * Опубликовать сообщение в очереди
      *
-     * @throws StompClientException
-     * @return Stomp
+     * @param string $destination Очередь, куда класть сообщение
+     * @param string $body Тело сообщения
+     * @param array $headers
+     * @param string $transactionId ID транзакции
+     * @return boolean
      */
-    public function newConnection()
-    {
-        $this->errors = [];
-        $stomp = $this->initStomp();
-        if (!($stomp instanceof Stomp)) {
-            throw new StompClientException("Couldn't connect to Brocker by provided hosts: " . implode('; ', $this->errors));
+    public function send(
+        string $destination,
+        string $body,
+        array $headers = [],
+        string $transactionId = '') {
+
+        if (strlen($transactionId) === 0) {
+            $transactionId = uniqid();
         }
 
-        $this->stomp = $stomp;
+        $result = true;
+        try {
+            $stomp = $this->getStomp();
+            $stomp->begin($transactionId);
+            $stomp->send($destination, $body, $headers);
+            $stomp->commit($transactionId);
+        } catch (Exception $e) {
+            $result = false;
 
-        return $this->stomp;
+            $this->getStomp()->abort($transactionId);
+
+            // Логирование в случае, если установлен логгер
+            $this->putInLog(LogLevel::ERROR, 'Stomp transaction failed. Transaction id: ' . $transactionId, [
+                'Message' => $e->getMessage(),
+                'Code' => $e->getCode(),
+                'File' => $e->getFile(),
+                'Line' => $e->getLine()
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getNextFrame()
+    {
+        try {
+            $stomp = $this->getStomp();
+            if (!$stomp->hasFrame()) {
+                return null;
+            }
+
+            return $stomp->readFrame();
+        } catch (Exception $ex) {
+            // Логирование в случае, если установлен логгер
+            $this->putInLog(LogLevel::ERROR, 'Stomp::getNextFrame failed', [
+                'Message' => $ex->getMessage(),
+                'Code' => $ex->getCode(),
+                'File' => $ex->getFile(),
+                'Line' => $ex->getLine()
+            ]);
+
+            throw $ex;
+        }
+    }
+
+    /**
+     * @param $frame
+     *
+     * @return bool
+     */
+    public function ack($frame)
+    {
+        $id = !empty($frame->headers['ack']) ? $frame->headers['ack'] : $frame;
+
+        try {
+            return $this->getStomp()->ack($id, ['id' => $id]);
+        } catch (Exception $ex) {
+            // Логирование в случае, если установлен логгер
+            $this->putInLog(LogLevel::ERROR, 'Stomp::ack failed', [
+                'Message' => $ex->getMessage(),
+                'Code' => $ex->getCode(),
+                'File' => $ex->getFile(),
+                'Line' => $ex->getLine(),
+                'frame' => $frame
+            ]);
+
+            throw $ex;
+        }
+    }
+
+    /**
+     * @param $frame
+     *
+     * @return mixed
+     */
+    public function nack($frame)
+    {
+        $id = !empty($frame->headers['ack']) ? $frame->headers['ack'] : $frame;
+
+        try {
+            return $this->getStomp()->nack($id, ['id' => $id]);
+        } catch (Exception $ex) {
+            // Логирование в случае, если установлен логгер
+            $this->putInLog(LogLevel::ERROR, 'Stomp::nack failed', [
+                'Message' => $ex->getMessage(),
+                'Code' => $ex->getCode(),
+                'File' => $ex->getFile(),
+                'Line' => $ex->getLine(),
+                'frame' => $frame
+            ]);
+
+            throw $ex;
+        }
+    }
+    
+    /**
+     * @param array $queues Массив очередей, к которым нужно подписаться
+     * @return void
+     */
+    public function subscribe($queues)
+    {
+        if (is_string($queues)) {
+            $this->queues = [ $queues ];
+        } else {
+            $this->queues = $queues;
+        }
+
+        try {
+            $stomp = $this->getStomp();
+            foreach ($this->queues as $queue) {
+                $stomp->subscribe($queue, ['id' => $stomp->getSessionId()]);
+            }
+        } catch (Exception $ex) {
+            // Логирование в случае, если установлен логгер
+            $this->putInLog(LogLevel::ERROR, 'Stomp::subscribe failed', [
+                'Message' => $ex->getMessage(),
+                'Code' => $ex->getCode(),
+                'File' => $ex->getFile(),
+                'Line' => $ex->getLine(),
+                'queues' => $this->queues
+            ]);
+
+            throw $ex;
+        }
+    }
+
+    /**
+     * Отписываемся от всех очередей
+     *
+     * @return void
+     */
+    public function unsubscribe()
+    {
+        if (count($this->queues) === 0) {
+            return;
+        }
+
+        try {
+            $stomp = $this->getStomp();
+            foreach ($this->queues as $queue) {
+                $stomp->unsubscribe($queue, ['id' => $stomp->getSessionId()]);
+            }
+        } catch (Exception $ex) {
+            // Логирование в случае, если установлен логгер
+            $this->putInLog(LogLevel::ERROR, 'Stomp::unsubscribe failed', [
+                'Message' => $ex->getMessage(),
+                'Code' => $ex->getCode(),
+                'File' => $ex->getFile(),
+                'Line' => $ex->getLine(),
+                'queues' => $this->queues
+            ]);
+
+            throw $ex;
+        }
     }
 
     /**
      * Возвращает коннект первого доступного брокера
+     * В случае необходимости устанавливает коннект
      *
      * @return null|Stomp
      */
-    private function initStomp()
+    private function getStomp()
     {
-        foreach ($this->hosts as $host) {
-            if ($connection = $this->connect($host, $this->login, $this->pw)) {
-                return $connection;
-            }
+        if (is_null($this->stomp)) {
+            $this->stomp = $this->initStomp();
         }
 
-        return null;
+        if (!empty($this->stomp->error())) {
+            $this->putInLog(LogLevel::INFO, 'Stomp::getStomp error', [
+                'error' => $this->stomp->error(),
+            ]);
+
+            $this->stomp = $this->initStomp();
+        }
+
+        return $this->stomp;
     }
 
     /**
-     * Подключение к брокеру по ссылке
+     * Возвращает коннект первого доступного брокера.
      *
-     * @param string $url
-     * @param string $login
-     * @param string $pw
+     * @return Stomp
+     */
+    private function initStomp()
+    {
+        $errors = [];
+        $i = 0;
+        foreach ($this->hosts as $host) {
+            $i++;
+            try {
+                $connect = $this->connect($host, $this->login, $this->pw);
+                $this->putInLog(LogLevel::INFO, 'Stomp::initStomp connected', [
+                    'host' => $host,
+                ]);
+
+                return $connect;
+            } catch (Exception $ex) {
+                $errors[] = $ex->getMessage();
+                if ($i === count($this->hosts)) {
+                    throw new StompClientException("StompClient cannot connect to: " . implode(', ',$this->hosts) . '.Errors: ' . implode(', ',$errors));
+                }
+            }
+        }
+    }
+
+    /**
+     * Подключение к брокеру по ссылке.
+     *
+     * @param  string     $url
+     * @param  string     $login
+     * @param  string     $pw
      * @return Stomp|null
      */
     private function connect($url, $login, $pw)
     {
         try {
-            return new Stomp($url, $login, $pw, ['accept-version' => '1.2']);
+            return new Stomp($url, $login, $pw, ['accept-version' => '1.2', 'RECEIPT' => true]);
         } catch (StompException $e) {
-            $this->errors[] = $url . ': ' . $e->getMessage();
+            throw $e;
         }
-
-        return null;
     }
 }
