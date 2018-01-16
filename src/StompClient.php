@@ -76,11 +76,6 @@ class StompClient
         $this->hosts = null;
         $this->login = null;
         $this->pw = null;
-        if ($this->stomp) {
-            foreach ($this->queues as $queue) {
-                $this->stomp->unsubscribe($queue, ['id' => $this->stomp->getSessionId()]);
-            }
-        }
         $this->stomp = null;
         $this->queues = [];
     }
@@ -215,7 +210,7 @@ class StompClient
             return false;
         }
     }
-    
+
     /**
      * @param array $queues Массив очередей, к которым нужно подписаться
      * @return void
