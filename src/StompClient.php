@@ -101,14 +101,13 @@ class StompClient
 
         $result = true;
         try {
-            $stomp = $this->getStomp();
-            if (!$stomp->begin($transactionId)) {
+            if (!$this->getStomp()->begin($transactionId)) {
                 throw new Exception('Transaction does not started');
             }
-            if (!$stomp->send($destination, $body, $headers)) {
+            if (!$this->getStomp()->send($destination, $body, $headers)) {
                 throw new Exception('Message does not sended. Headers: ' . implode(', ', $headers));
             }
-            if (!$stomp->commit($transactionId)) {
+            if (!$this->getStomp()->commit($transactionId)) {
                 throw new Exception('Transaction does not completed');
             }
         } catch (Exception $e) {
@@ -289,7 +288,7 @@ class StompClient
         }
 
         if (!empty($this->stomp->error())) {
-            $this->putInLog(LogLevel::ERROR, 'Stomp::getStomp error', [
+            $this->putInLog(LogLevel::WARNING, 'Stomp::getStomp error', [
                 'error' => $this->stomp->error(),
             ]);
 
@@ -312,7 +311,7 @@ class StompClient
             $i++;
             try {
                 $connect = $this->connect($host, $this->login, $this->pw);
-                $this->putInLog(LogLevel::INFO, 'Stomp::initStomp connected', [
+                $this->putInLog(LogLevel::WARNING, 'Stomp::initStomp connected', [
                     'host' => $host,
                 ]);
 
