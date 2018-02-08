@@ -92,31 +92,18 @@ class StompClient
     public function send(
         string $destination,
         string $body,
-        array $headers = [],
-        string $transactionId = '') {
-
-        if (strlen($transactionId) === 0) {
-            $transactionId = uniqid();
-        }
+        array $headers = []) {
 
         $result = true;
         try {
-            if (!$this->getStomp()->begin($transactionId)) {
-                throw new Exception('Transaction does not started');
-            }
             if (!$this->getStomp()->send($destination, $body, $headers)) {
                 throw new Exception('Message does not sended. Headers: ' . implode(', ', $headers));
-            }
-            if (!$this->getStomp()->commit($transactionId)) {
-                throw new Exception('Transaction does not completed');
             }
         } catch (Exception $e) {
             $result = false;
 
-            $this->getStomp()->abort($transactionId);
-
             // Логирование в случае, если установлен логгер
-            $this->putInLog(LogLevel::ERROR, 'Stomp::send failed. Transaction id: ' . $transactionId, [
+            $this->putInLog(LogLevel::ERROR, 'Stomp::send failed.', [
                 'Message' => $e->getMessage(),
                 'Code' => $e->getCode(),
                 'File' => $e->getFile(),
