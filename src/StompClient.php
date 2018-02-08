@@ -96,18 +96,14 @@ class StompClient
 
         $result = true;
         try {
-            if (!$this->getStomp()->send($destination, $body, $headers)) {
-                throw new Exception('Message does not sended. Headers: ' . implode(', ', $headers));
-            }
+            $result = $this->getStomp()->send($destination, $body, $headers);
         } catch (Exception $e) {
             $result = false;
 
             // Логирование в случае, если установлен логгер
             $this->putInLog(LogLevel::ERROR, 'Stomp::send failed.', [
                 'Message' => $e->getMessage(),
-                'Code' => $e->getCode(),
-                'File' => $e->getFile(),
-                'Line' => $e->getLine()
+                'headers' => implode(', ', $headers)
             ]);
         }
 
