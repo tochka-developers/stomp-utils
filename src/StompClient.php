@@ -111,7 +111,8 @@ class StompClient
     }
 
     /**
-     * @return array|null
+     * @return \StompFrame|null
+     * @throws Exception
      */
     public function getNextFrame()
     {
@@ -131,7 +132,7 @@ class StompClient
                 'Line' => $ex->getLine()
             ]);
 
-            return null;
+            throw $ex;
         }
     }
 
