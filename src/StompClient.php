@@ -196,7 +196,10 @@ class StompClient
 
     /**
      * @param array $queues Массив очередей, к которым нужно подписаться
+     *
      * @return void
+     *
+     * @throws Exception
      */
     public function subscribe($queues)
     {
@@ -209,7 +212,10 @@ class StompClient
         try {
             foreach ($this->queues as $queue) {
                 $stomp = $this->getStomp();
-                if (!$stomp->subscribe($queue, ['id' => $stomp->getSessionId()])) {
+
+                $sessionId = $stomp->getSessionId() . '_' . $queue;
+
+                if (!$stomp->subscribe($queue, ['id' => $sessionId])) {
                     throw new Exception('Queue: ' . $queue);
                 }
             }
@@ -231,6 +237,8 @@ class StompClient
      * Отписываемся от всех очередей
      *
      * @return void
+     *
+     * @throws Exception
      */
     public function unsubscribe()
     {
@@ -241,7 +249,10 @@ class StompClient
         try {
             foreach ($this->queues as $queue) {
                 $stomp = $this->getStomp();
-                if (!$stomp->unsubscribe($queue, ['id' => $stomp->getSessionId()])) {
+
+                $sessionId = $stomp->getSessionId() . '_' . $queue;
+
+                if (!$stomp->unsubscribe($queue, ['id' => $sessionId])) {
                     throw new Exception('Queue: ' . $queue);
                 }
             }
@@ -264,6 +275,8 @@ class StompClient
      * В случае необходимости устанавливает коннект
      *
      * @return null|Stomp
+     *
+     * @throws StompClientException
      */
     private function getStomp()
     {
@@ -286,6 +299,8 @@ class StompClient
      * Возвращает коннект первого доступного брокера.
      *
      * @return Stomp
+     *
+     * @throws StompClientException
      */
     private function initStomp()
     {
@@ -312,10 +327,13 @@ class StompClient
     /**
      * Подключение к брокеру по ссылке.
      *
-     * @param  string     $url
-     * @param  string     $login
-     * @param  string     $pw
+     * @param string $url
+     * @param string $login
+     * @param string $pw
+     *
      * @return Stomp|null
+     *
+     * @throws Exception
      */
     private function connect($url, $login, $pw)
     {
