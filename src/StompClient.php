@@ -338,7 +338,11 @@ class StompClient
     private function connect($url, $login, $pw)
     {
         try {
-            return new Stomp($url, $login, $pw, ['accept-version' => '1.2', 'RECEIPT' => true]);
+            return new Stomp($url, $login, $pw, [
+                'accept-version' => '1.2',
+                'RECEIPT' => true,
+                'host' => $login
+            ]);
         } catch (StompException $e) {
             throw $e;
         }
