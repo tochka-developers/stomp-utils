@@ -317,6 +317,7 @@ class StompClient
      * @param  string $pw
      *
      * @return Stomp|null
+     *
      * @throws Exception
      */
     private function connect($url, $login, $pw)
