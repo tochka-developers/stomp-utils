@@ -312,9 +312,9 @@ class StompClient
     /**
      * Подключение к брокеру по ссылке.
      *
-     * @param  string $url
-     * @param  string $login
-     * @param  string $pw
+     * @param string $url
+     * @param string $login
+     * @param string $pw
      *
      * @return Stomp|null
      *
