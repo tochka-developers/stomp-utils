@@ -27,20 +27,20 @@ class StompClient
     use Traits\Loggable;
 
     /**
-     * @var Stomp
+     * @var Stomp|null
      */
     private $stomp;
 
-    /** @var array $hosts */
+    /** @var array|null $hosts */
     private $hosts;
 
-    /** @var string $login */
+    /** @var string|null $login */
     private $login;
 
-    /** @var string $pw */
+    /** @var string|null $pw */
     private $pw;
 
-    /** @var string $vhost */
+    /** @var string|null $vhost */
     private $vhost;
 
     /**
@@ -365,7 +365,7 @@ class StompClient
         string $url,
         string $login,
         string $pw,
-        string $vhost
+        string $vhost = null
     )
     {
         $headers = [
