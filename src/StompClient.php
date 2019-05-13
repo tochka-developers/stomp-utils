@@ -15,12 +15,12 @@ use Tochka\Integration\Stomp\Exception\StompClientException;
 /**
  * @author Sergey Ivanov(ivanov@tochka.com)
  *
- * @property Stomp  stomp
- * @property string login
- * @property array  hosts
- * @property array  queues
- * @property string pw
- * @property string vhost
+ * @property Stomp|null  stomp
+ * @property string      login
+ * @property array       hosts
+ * @property array       queues
+ * @property string      pw
+ * @property string|null vhost
  */
 class StompClient
 {
@@ -31,13 +31,13 @@ class StompClient
      */
     private $stomp;
 
-    /** @var array|null $hosts */
+    /** @var array $hosts */
     private $hosts;
 
-    /** @var string|null $login */
+    /** @var string $login */
     private $login;
 
-    /** @var string|null $pw */
+    /** @var string $pw */
     private $pw;
 
     /** @var string|null $vhost */
